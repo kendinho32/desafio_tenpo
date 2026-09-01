@@ -36,4 +36,16 @@ class RateLimitFilterTest extends AbstractIntegrationTest {
             .expectBody()
             .jsonPath("$.status").isEqualTo(429);
     }
+
+    @Test
+    void nonApiPathsAreNotRateLimited() {
+        // Swagger/OpenAPI paths (e.g. /v3/api-docs) must be exempt from the /api/* rate limit,
+        // otherwise loading the Swagger UI page (which itself fires several requests) trips
+        // the 3-request limit and half-loads with 429s.
+        for (int i = 0; i < 4; i++) {
+            webTestClient.get().uri("/v3/api-docs")
+                .exchange()
+                .expectStatus().isOk();
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package com.tenpo.history;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Column;
@@ -26,6 +27,7 @@ public record CallLog(
     }
 
     @Override
+    @JsonIgnore
     public boolean isNew() {
         return true;
     }

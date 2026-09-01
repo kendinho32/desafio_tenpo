@@ -25,6 +25,8 @@ public class CallLogPersister {
     void subscribeToEvents() {
         eventBus.events()
             .flatMap(this::persist)
+            .doOnError(ex -> log.error("Suscripción del persister terminó con error", ex))
+            .retry()
             .subscribe();
     }
 

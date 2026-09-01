@@ -104,6 +104,24 @@ class CalculationServiceTest {
     }
 
     @Test
+    void degradesToFetchingFreshWhenCacheReadFails() {
+        // I4: a Redis outage on the cache read must not take down the whole endpoint with a
+        // generic 500 - it should degrade to "no cache" and fetch fresh from PercentageService.
+        when(cacheService.getCached()).thenReturn(Mono.error(new RuntimeException("redis unreachable")));
+        when(percentageService.fetchPercentage()).thenReturn(Mono.just(BigDecimal.TEN));
+        when(cacheService.store(BigDecimal.TEN)).thenReturn(Mono.empty());
+
+        StepVerifier.create(calculationService.calculate(BigDecimal.valueOf(5), BigDecimal.valueOf(5)))
+            .assertNext(response -> {
+                assertThat(response.percentageApplied()).isEqualByComparingTo(BigDecimal.TEN);
+                assertThat(response.result()).isEqualByComparingTo(BigDecimal.valueOf(11));
+            })
+            .verifyComplete();
+
+        verify(percentageService).fetchPercentage();
+    }
+
+    @Test
     void returnsFreshValueWhenFetchSucceedsButCacheWriteFails() {
         when(cacheService.getCached()).thenReturn(Mono.just(Optional.empty()));
         when(percentageService.fetchPercentage()).thenReturn(Mono.just(BigDecimal.TEN));

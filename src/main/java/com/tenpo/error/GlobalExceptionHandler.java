@@ -3,6 +3,8 @@ package com.tenpo.error;
 import com.tenpo.calculation.exception.PercentageUnavailableException;
 import com.tenpo.history.CallLogEvent;
 import com.tenpo.history.CallLogEventBus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -17,6 +19,8 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private static final String HISTORY_PATH_PREFIX = "/api/v1/history";
 
@@ -55,12 +59,14 @@ public class GlobalExceptionHandler {
             status = HttpStatus.INTERNAL_SERVER_ERROR;
         }
         String message = ex.getReason() != null ? ex.getReason() : status.getReasonPhrase();
+        log.warn("Respuesta de error {} en {} {}: {}", status.value(), request.getMethod(), request.getPath().value(), message);
         logIfNotHistory(request, status.value(), message);
         return build(status, message, request);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneric(Exception ex, ServerHttpRequest request) {
+        log.error("Error no controlado en {} {}", request.getMethod(), request.getPath().value(), ex);
         logIfNotHistory(request, 500, "Error interno inesperado.");
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrió un error interno inesperado.", request);
     }

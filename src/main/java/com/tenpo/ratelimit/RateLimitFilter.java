@@ -3,6 +3,8 @@ package com.tenpo.ratelimit;
 import com.tenpo.error.ApiError;
 import com.tenpo.history.CallLogEvent;
 import com.tenpo.history.CallLogEventBus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
@@ -23,6 +25,8 @@ import java.time.Instant;
 
 @Component
 public class RateLimitFilter implements WebFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(RateLimitFilter.class);
 
     private static final String HISTORY_PATH_PREFIX = "/api/v1/history";
 
@@ -47,6 +51,11 @@ public class RateLimitFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        String path = exchange.getRequest().getPath().value();
+        if (!path.startsWith("/api/")) {
+            return chain.filter(exchange);
+        }
+
         long window = Instant.now().getEpochSecond() / windowSeconds;
         String key = "ratelimit:" + window;
 
@@ -60,6 +69,11 @@ public class RateLimitFilter implements WebFilter {
                     return ensureExpiry.then(tooManyRequests(exchange));
                 }
                 return ensureExpiry.then(chain.filter(exchange));
+            })
+            .onErrorResume(ex -> {
+                log.warn("No se pudo aplicar rate limiting (Redis no disponible), dejando pasar la solicitud {} {}",
+                    exchange.getRequest().getMethod(), path, ex);
+                return chain.filter(exchange);
             });
     }
 

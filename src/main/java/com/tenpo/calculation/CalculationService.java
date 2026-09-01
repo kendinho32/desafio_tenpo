@@ -1,6 +1,8 @@
 package com.tenpo.calculation;
 
 import com.tenpo.calculation.exception.PercentageUnavailableException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
@@ -12,6 +14,8 @@ import java.util.Optional;
 
 @Service
 public class CalculationService {
+
+    private static final Logger log = LoggerFactory.getLogger(CalculationService.class);
 
     private final PercentageService percentageService;
     private final PercentageCacheService cacheService;
@@ -28,6 +32,10 @@ public class CalculationService {
 
     private Mono<BigDecimal> resolvePercentage() {
         return cacheService.getCached()
+            .onErrorResume(ex -> {
+                log.warn("No se pudo leer el caché de porcentaje en Redis, se continúa sin caché", ex);
+                return Mono.just(Optional.empty());
+            })
             .flatMap(cachedOpt -> {
                 if (cachedOpt.isPresent() && cacheService.isFresh(cachedOpt.get().cachedAt())) {
                     return Mono.just(cachedOpt.get().value());
