@@ -3,6 +3,7 @@ package com.tenpo.calculation;
 import com.tenpo.calculation.exception.PercentageUnavailableException;
 import com.tenpo.history.CallLogEvent;
 import com.tenpo.history.CallLogEventBus;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,6 +15,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 
+@Tag(name = "Calculations", description = "Cálculo de suma más porcentaje dinámico")
 @RestController
 @RequestMapping("/api/v1/calculations")
 public class CalculationController {

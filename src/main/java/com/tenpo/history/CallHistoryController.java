@@ -1,5 +1,6 @@
 package com.tenpo.history;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebInputException;
 import reactor.core.publisher.Mono;
 
+@Tag(name = "History", description = "Consulta paginada del historial de llamadas")
 @RestController
 @RequestMapping("/api/v1/history")
 public class CallHistoryController {
