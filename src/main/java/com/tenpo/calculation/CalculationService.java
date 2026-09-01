@@ -39,8 +39,8 @@ public class CalculationService {
     private Mono<BigDecimal> fetchFreshWithFallback(Optional<PercentageCacheService.CachedPercentage> cachedOpt) {
         return Mono.defer(percentageService::fetchPercentage)
             .retryWhen(Retry.backoff(2, Duration.ofMillis(50)))
-            .flatMap(fresh -> cacheService.store(fresh).thenReturn(fresh))
-            .onErrorResume(ex -> cachedOpt
+            .flatMap(fresh -> cacheService.store(fresh).thenReturn(fresh).onErrorReturn(fresh))
+            .onErrorResume(fetchError -> cachedOpt
                 .map(cached -> Mono.just(cached.value()))
                 .orElseGet(() -> Mono.error(new PercentageUnavailableException(
                     "El servicio de porcentaje no está disponible y no hay un valor en caché previo."))));

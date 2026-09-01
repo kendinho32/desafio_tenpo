@@ -102,4 +102,21 @@ class CalculationServiceTest {
 
         verify(percentageService, times(3)).fetchPercentage();
     }
+
+    @Test
+    void returnsFreshValueWhenFetchSucceedsButCacheWriteFails() {
+        when(cacheService.getCached()).thenReturn(Mono.just(Optional.empty()));
+        when(percentageService.fetchPercentage()).thenReturn(Mono.just(BigDecimal.TEN));
+        when(cacheService.store(BigDecimal.TEN))
+            .thenReturn(Mono.error(new RuntimeException("redis hiccup")));
+
+        StepVerifier.create(calculationService.calculate(BigDecimal.valueOf(5), BigDecimal.valueOf(5)))
+            .assertNext(response -> {
+                assertThat(response.percentageApplied()).isEqualByComparingTo(BigDecimal.TEN);
+                assertThat(response.result()).isEqualByComparingTo(BigDecimal.valueOf(11));
+            })
+            .verifyComplete();
+
+        verify(percentageService, times(1)).fetchPercentage();
+    }
 }
