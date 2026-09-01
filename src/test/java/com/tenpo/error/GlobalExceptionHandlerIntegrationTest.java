@@ -35,4 +35,13 @@ class GlobalExceptionHandlerIntegrationTest extends AbstractIntegrationTest {
             .expectBody()
             .jsonPath("$.status").isEqualTo(503);
     }
+
+    @Test
+    void returns404ForUnmappedRoute() {
+        webTestClient.get().uri("/api/v1/does-not-exist")
+            .exchange()
+            .expectStatus().isNotFound()
+            .expectBody()
+            .jsonPath("$.status").isEqualTo(404);
+    }
 }
