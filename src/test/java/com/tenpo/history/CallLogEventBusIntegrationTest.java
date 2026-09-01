@@ -27,6 +27,7 @@ class CallLogEventBusIntegrationTest extends AbstractIntegrationTest {
 
         StepVerifier.create(
                 Flux.interval(Duration.ofMillis(50))
+                    .onBackpressureDrop()
                     .flatMap(tick -> repository.findAll(), 1)
                     .filter(log -> log.endpoint().equals(uniqueEndpoint))
                     .next()
